@@ -1,0 +1,34 @@
+# ComfySweep — the ComfyUI Cleaner Agent
+#
+# Everything is configured in the web UI (http://<server>:8191). The ONLY
+# thing to edit here is the host folder ComfySweep may see — see "volumes".
+services:
+  comfysweep:
+    build: .
+    image: comfysweep:latest
+    container_name: comfysweep
+    restart: unless-stopped
+    ports:
+      - "8191:8191"
+    # Lets the default ComfyUI URL (http://host.docker.internal:8188) reach a
+    # ComfyUI that runs on this same server.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # ┌──────────────────────────────────────────────────────────────────┐
+      # │ EDIT THE LEFT-HAND SIDE: the host folder that CONTAINS ComfyUI's  │
+      # │ output/ input/ temp/ folders (or a parent of it).                 │
+      # │ You will pick the exact folders in Settings → Folders.            │
+      # └──────────────────────────────────────────────────────────────────┘
+      - /opt/ComfyUI:/host
+      # ComfySweep's own database (settings, history, logs). Keep it.
+      - ./data:/data
+    # Least privilege. Root inside the container is NOT privileged once ALL
+    # capabilities are dropped, so DAC_OVERRIDE is added back: it is what lets
+    # ComfySweep delete files owned by ComfyUI's user. Nothing else is needed.
+    # A capability change only applies on `docker compose up -d` (recreate),
+    # not on `docker restart`.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: ["ALL"]
+    cap_add: ["DAC_OVERRIDE"]

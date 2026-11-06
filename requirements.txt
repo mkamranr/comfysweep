@@ -1,0 +1,5 @@
+fastapi==0.128.8
+uvicorn==0.40.0
+pydantic==2.12.5
+# IANA timezone database, so zoneinfo works on a slim image with no OS tzdata.
+tzdata==2025.2
