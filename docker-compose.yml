@@ -4,8 +4,10 @@
 # thing to edit here is the host folder ComfySweep may see — see "volumes".
 services:
   comfysweep:
+    # Prebuilt image (amd64 + arm64). `docker compose up -d --build` builds
+    # it from this folder instead.
+    image: ghcr.io/mkamranr/comfysweep:latest
     build: .
-    image: comfysweep:latest
     container_name: comfysweep
     restart: unless-stopped
     ports:

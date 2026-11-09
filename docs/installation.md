@@ -68,9 +68,16 @@ in the UI.
 ## 3. Start ComfySweep
 
 ```bash
-docker compose up -d --build
+docker compose pull                     # prebuilt image from ghcr.io (amd64 + arm64)
+docker compose up -d
 docker compose logs -f comfysweep       # Ctrl+C to stop following
 ```
+
+To build the image from source instead of pulling it, run `docker compose up -d --build`.
+
+Published tags: `latest` (the `main` branch), `2.0.0` / `2.0` / `2` (releases) and
+`sha-<commit>`. Pin a release by changing `image:` in `docker-compose.yml`, e.g.
+`ghcr.io/mkamranr/comfysweep:2.0.0`.
 
 The dashboard listens on port **8191**. To use another port, change the left side of
 `"8191:8191"` in `docker-compose.yml`.
@@ -125,17 +132,17 @@ unreachable, outputs are still cleaned; inputs and temp are skipped.
 
 ## Air-gapped servers and ARM64
 
-The image has no runtime dependencies on the internet. Build it on a connected machine
+The image has no runtime dependencies on the internet. Pull it on a connected machine
 for the server's architecture, then carry it over:
 
 ```bash
 # on a connected machine (use linux/amd64 for x86 servers)
-docker buildx build --platform linux/arm64 -t comfysweep:latest --load .
-docker save comfysweep:latest | gzip > comfysweep.tar.gz
+docker pull --platform linux/arm64 ghcr.io/mkamranr/comfysweep:latest
+docker save ghcr.io/mkamranr/comfysweep:latest | gzip > comfysweep.tar.gz
 
 # on the server, next to docker-compose.yml
 gunzip -c comfysweep.tar.gz | docker load
-docker compose up -d            # no --build: uses the loaded image
+docker compose up -d            # no pull, no --build: uses the loaded image
 ```
 
 ## Behind a reverse proxy (HTTPS)
@@ -164,8 +171,8 @@ service in `docker-compose.yml`:
 ## Upgrading, backup and removal
 
 ```bash
-git pull
-docker compose up -d --build            # settings, history and logs are kept in ./data
+git pull                                # newest docker-compose.yml and docs
+docker compose pull && docker compose up -d   # settings, history and logs are kept in ./data
 ```
 
 - **Backup**: copy `./data/comfysweep.db`. It holds all settings, users, history and logs.

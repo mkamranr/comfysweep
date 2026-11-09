@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mkamranr/comfysweep/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/mkamranr/comfysweep/actions/workflows/tests.yml/badge.svg"></a>
+  <a href="https://github.com/mkamranr/comfysweep/actions/workflows/tests.yml"><img alt="CI" src="https://github.com/mkamranr/comfysweep/actions/workflows/tests.yml/badge.svg"></a>
   <img alt="Docker" src="https://img.shields.io/badge/runs%20on-Docker-2496ED?logo=docker&logoColor=white">
   <img alt="Python" src="https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white">
   <img alt="FastAPI" src="https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white">
@@ -62,7 +62,7 @@ Requirements: Docker with Compose, on **the same server as ComfyUI**. ComfySweep
 files directly, so it must be able to see ComfyUI's folders.
 
 ```bash
-git clone <this repository> comfysweep && cd comfysweep
+git clone https://github.com/mkamranr/comfysweep.git && cd comfysweep
 ```
 
 **1. Point ComfySweep at your ComfyUI folders.** Open `docker-compose.yml` and change
@@ -78,11 +78,14 @@ the left-hand side of this one line to the host folder that **contains** ComfyUI
 > `docker inspect <comfyui-container> --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'`.
 > See [Installation](docs/installation.md#1-find-comfyuis-folders) for details.
 
-**2. Start it.**
+**2. Start it.** This pulls the prebuilt image (`linux/amd64` and `linux/arm64`) from
+GitHub Container Registry:
 
 ```bash
-docker compose up -d --build
+docker compose pull && docker compose up -d
 ```
+
+Prefer to build it yourself? Use `docker compose up -d --build` instead.
 
 **3. Open `http://<your-server>:8191`.** The setup wizard walks you through creating the
 admin account, connecting to ComfyUI, picking folders and setting a schedule.
