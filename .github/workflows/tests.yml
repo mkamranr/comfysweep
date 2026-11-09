@@ -1,0 +1,72 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: pytest (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: python -m pytest -q
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    needs: pytest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t comfysweep:ci .
+
+      - name: Self-test inside the container
+        run: |
+          mkdir -p "$RUNNER_TEMP/host/ComfyUI/output" "$RUNNER_TEMP/data"
+          docker run --rm \
+            -v "$RUNNER_TEMP/host:/host" -v "$RUNNER_TEMP/data:/data" \
+            comfysweep:ci python -m app.cli selftest
+
+      - name: Container starts and answers /api/ping
+        run: |
+          docker run -d --name comfysweep-ci -p 8191:8191 \
+            -v "$RUNNER_TEMP/host:/host" -v "$RUNNER_TEMP/data:/data" \
+            comfysweep:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8191/api/ping; then echo; exit 0; fi
+            sleep 1
+          done
+          docker logs comfysweep-ci
+          exit 1
+
+      - name: Container logs
+        if: always()
+        run: docker logs comfysweep-ci || true
